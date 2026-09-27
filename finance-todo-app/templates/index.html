@@ -327,15 +327,11 @@
 
               <!-- Expanded Action Toolbar (Shown when focused/expanded) -->
               <div id="task-input-footer" class="hidden pt-2.5 border-t border-slate-800/80 mt-2 flex items-center justify-between gap-2">
-                <!-- Helper tips for desktop / counter for mobile -->
-                <div class="hidden sm:flex items-center gap-1.5 text-[11px] text-slate-400">
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700/60 font-mono text-[10px] text-slate-300">Enter</span>
-                  <span>to save</span>
-                  <span class="text-slate-600">•</span>
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700/60 font-mono text-[10px] text-slate-300">Shift+Enter</span>
-                  <span>new line</span>
+                <!-- Mobile-friendly character count indicator -->
+                <div class="flex items-center gap-1.5 text-[11px] text-slate-500 pl-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-indigo-500/70"></span>
+                  <span id="task-char-count" class="font-mono">0 chars</span>
                 </div>
-                <div id="task-char-count" class="sm:hidden text-[11px] text-slate-500 pl-1 font-mono">0 chars</div>
 
                 <!-- Action buttons -->
                 <div class="flex items-center gap-2 ml-auto">
@@ -989,7 +985,7 @@
     }
 
     function handleTaskInputKeydown(e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
         handleAddTask(e);
       } else if (e.key === 'Escape') {
