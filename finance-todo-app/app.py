@@ -14,7 +14,7 @@ app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 # Database URI (supports DATABASE_URL for Postgres on Vercel/cloud, or SQLite locally)
-database_url = os.environ.get('DATABASE_URL') or os.environ.get('DATABASE_URI')
+database_url = (os.environ.get('DATABASE_URL') or os.environ.get('DATABASE_URI') or '').strip()
 if database_url:
     if database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql+psycopg2://", 1)
