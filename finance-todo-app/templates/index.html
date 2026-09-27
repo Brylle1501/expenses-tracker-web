@@ -63,6 +63,17 @@
       background: #334155;
       border-radius: 4px;
     }
+    @keyframes gentleShake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-4px); }
+      40%, 80% { transform: translateX(4px); }
+    }
+    .animate-shake {
+      animation: gentleShake 0.35s ease-in-out;
+    }
+    #task-input {
+      transition: min-height 0.22s ease-out;
+    }
   </style>
 </head>
 
@@ -272,24 +283,79 @@
             </div>
           </div>
 
-          <!-- Task Input Form -->
-          <form id="task-form" onsubmit="handleAddTask(event)" class="space-y-2">
-            <label for="task-input" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Add New Task</label>
-            <div class="flex gap-2">
-              <input type="text"
-                     id="task-input"
-                     placeholder="What needs to be done?"
-                     required
-                     autocomplete="off"
-                     class="touch-target flex-1 bg-slate-950 border border-slate-700/80 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl px-4 text-sm text-slate-100 placeholder-slate-500 outline-none transition" />
-              <button type="submit"
-                      id="btn-add-task"
-                      class="touch-target px-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-medium rounded-xl text-sm flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20 transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Add</span>
-              </button>
+          <!-- Expandable Task Input Form -->
+          <form id="task-form" onsubmit="handleAddTask(event)" novalidate class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label for="task-input" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Add New Task</label>
+              <span id="task-input-badge" class="hidden text-[11px] font-medium text-indigo-400 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
+                <span>Expanded Editor</span>
+              </span>
+            </div>
+
+            <div id="task-input-card"
+                 onclick="handleTaskCardClick(event)"
+                 class="relative bg-slate-950/80 border border-slate-700/80 hover:border-slate-600 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/25 focus-within:shadow-xl focus-within:shadow-indigo-950/40 rounded-2xl p-2.5 transition-all duration-300">
+              
+              <!-- Input row -->
+              <div class="flex items-start gap-2.5">
+                <div class="pt-2 pl-1 text-indigo-400 shrink-0">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </div>
+
+                <textarea id="task-input"
+                          rows="1"
+                          placeholder="What needs to be done?"
+                          autocomplete="off"
+                          onfocus="expandTaskInput()"
+                          oninput="handleTaskInputChange()"
+                          onkeydown="handleTaskInputKeydown(event)"
+                          class="w-full bg-transparent text-slate-100 placeholder-slate-500 text-sm py-1.5 px-1 outline-none resize-none overflow-hidden min-h-[38px] leading-relaxed transition-all duration-200"></textarea>
+
+                <!-- Compact Add Button (Visible in collapsed state) -->
+                <button type="submit"
+                        id="btn-add-task-compact"
+                        class="touch-target shrink-0 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.97] text-white font-medium rounded-xl text-sm flex items-center justify-center gap-1 shadow-md shadow-indigo-600/20 transition">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Add</span>
+                </button>
+              </div>
+
+              <!-- Expanded Action Toolbar (Shown when focused/expanded) -->
+              <div id="task-input-footer" class="hidden pt-2.5 border-t border-slate-800/80 mt-2 flex items-center justify-between gap-2">
+                <!-- Helper tips for desktop / counter for mobile -->
+                <div class="hidden sm:flex items-center gap-1.5 text-[11px] text-slate-400">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700/60 font-mono text-[10px] text-slate-300">Enter</span>
+                  <span>to save</span>
+                  <span class="text-slate-600">•</span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700/60 font-mono text-[10px] text-slate-300">Shift+Enter</span>
+                  <span>new line</span>
+                </div>
+                <div id="task-char-count" class="sm:hidden text-[11px] text-slate-500 pl-1 font-mono">0 chars</div>
+
+                <!-- Action buttons -->
+                <div class="flex items-center gap-2 ml-auto">
+                  <button type="button"
+                          id="btn-task-cancel"
+                          onclick="handleCancelTaskInput(event)"
+                          class="touch-target px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 active:scale-95 rounded-xl transition">
+                    Cancel
+                  </button>
+                  <button type="submit"
+                          id="btn-add-task"
+                          class="touch-target px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-semibold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/30 active:scale-95 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Add Task</span>
+                  </button>
+                </div>
+              </div>
+
             </div>
           </form>
 
@@ -838,14 +904,130 @@
       renderTasks();
     }
 
+    // -------------------------------------------------------------
+    // Task Input Expansion Controller
+    // -------------------------------------------------------------
+    function handleTaskCardClick(e) {
+      if (e && e.target && e.target.closest('button')) return;
+      expandTaskInput();
+      const input = document.getElementById('task-input');
+      if (input) input.focus();
+    }
+
+    function handleCancelTaskInput(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      collapseTaskInput(true);
+    }
+
+    function expandTaskInput() {
+      const input = document.getElementById('task-input');
+      const compactBtn = document.getElementById('btn-add-task-compact');
+      const footer = document.getElementById('task-input-footer');
+      const badge = document.getElementById('task-input-badge');
+
+      if (!input || !footer) return;
+
+      input.style.minHeight = '92px';
+      if (compactBtn) compactBtn.classList.add('hidden');
+      footer.classList.remove('hidden');
+      if (badge) badge.classList.remove('hidden');
+      autoResizeTaskInput();
+    }
+
+    function collapseTaskInput(force = false) {
+      const input = document.getElementById('task-input');
+      const compactBtn = document.getElementById('btn-add-task-compact');
+      const footer = document.getElementById('task-input-footer');
+      const badge = document.getElementById('task-input-badge');
+
+      if (!input || !footer) return;
+
+      if (!force && input.value.trim().length > 0) return;
+
+      if (force) input.value = '';
+
+      input.style.minHeight = '38px';
+      input.style.height = 'auto';
+      if (compactBtn) compactBtn.classList.remove('hidden');
+      footer.classList.add('hidden');
+      if (badge) badge.classList.add('hidden');
+      updateTaskCharCount();
+    }
+
+    function autoResizeTaskInput() {
+      const input = document.getElementById('task-input');
+      const footer = document.getElementById('task-input-footer');
+      if (!input) return;
+
+      const isExpanded = footer && !footer.classList.contains('hidden');
+      if (isExpanded) {
+        input.style.height = 'auto';
+        const targetHeight = Math.max(92, Math.min(240, input.scrollHeight));
+        input.style.height = targetHeight + 'px';
+        input.style.overflowY = input.scrollHeight > 240 ? 'auto' : 'hidden';
+      } else {
+        input.style.height = 'auto';
+        input.style.overflowY = 'hidden';
+      }
+    }
+
+    function handleTaskInputChange() {
+      autoResizeTaskInput();
+      updateTaskCharCount();
+    }
+
+    function updateTaskCharCount() {
+      const input = document.getElementById('task-input');
+      const countEl = document.getElementById('task-char-count');
+      if (input && countEl) {
+        const len = input.value.length;
+        countEl.textContent = `${len} char${len === 1 ? '' : 's'}`;
+      }
+    }
+
+    function handleTaskInputKeydown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleAddTask(e);
+      } else if (e.key === 'Escape') {
+        collapseTaskInput(false);
+      }
+    }
+
+    // Collapse task input if user clicks outside and input is empty
+    document.addEventListener('click', (e) => {
+      const taskForm = document.getElementById('task-form');
+      const input = document.getElementById('task-input');
+      if (taskForm && !taskForm.contains(e.target)) {
+        if (input && input.value.trim().length === 0) {
+          collapseTaskInput(false);
+        }
+      }
+    });
+
     async function handleAddTask(e) {
-      e.preventDefault();
+      if (e && e.preventDefault) e.preventDefault();
       const input = document.getElementById('task-input');
       const title = input.value.trim();
-      if (!title) return;
+      if (!title) {
+        const card = document.getElementById('task-input-card');
+        if (card) {
+          card.classList.remove('animate-shake');
+          void card.offsetWidth;
+          card.classList.add('animate-shake');
+        }
+        showToast('Please enter a task description', 'warning');
+        expandTaskInput();
+        input.focus();
+        return;
+      }
 
       const payload = { title };
       input.value = '';
+      collapseTaskInput(true);
 
       try {
         const res = await fetch('/api/tasks', {
