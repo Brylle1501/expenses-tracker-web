@@ -15,7 +15,7 @@ Apex is a clean, minimal, production-ready web application designed strictly **M
 ## 🛠️ Technology Stack
 - **Backend**: Python 3.9+ with **Flask**
 - **Authentication**: **Werkzeug** security (`generate_password_hash`, `check_password_hash`) + Flask Session management
-- **Database / ORM**: **SQLite** via **Flask-SQLAlchemy** with foreign-key user relationships
+- **Database / ORM**: **PostgreSQL (Supabase)** / **SQLite** via **Flask-SQLAlchemy** with foreign-key user relationships
 - **Frontend Styling**: **Tailwind CSS** (via official CDN) + Google Fonts (Inter)
 - **Frontend Logic**: **Vanilla JavaScript (ES6+)** with Fetch API (`credentials: 'same-origin'`)
 - **Security**: Strict client-side HTML sanitization (XSS prevention), server-side input validation, password hashing, and session authentication guards
