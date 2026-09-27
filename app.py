@@ -146,8 +146,25 @@ def index():
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    """Health check endpoint to verify backend connectivity."""
-    return jsonify({'status': 'ok', 'timestamp': datetime.utcnow().isoformat()}), 200
+    """Health check endpoint to verify backend connectivity and database status."""
+    db_status = "unknown"
+    db_error = None
+    try:
+        db.session.execute(db.text("SELECT 1"))
+        db_status = "connected"
+    except Exception as e:
+        db_status = "error"
+        db_error = str(e)
+
+    raw_uri = os.environ.get('DATABASE_URL') or os.environ.get('DATABASE_URI') or ''
+    return jsonify({
+        'status': 'ok',
+        'db_status': db_status,
+        'db_error': db_error,
+        'has_db_uri': bool(raw_uri),
+        'db_driver': app.config.get('SQLALCHEMY_DATABASE_URI', '').split('://')[0] if app.config.get('SQLALCHEMY_DATABASE_URI') else None,
+        'timestamp': datetime.utcnow().isoformat()
+    }), 200
 
 
 # ---------------------------------------------------------
@@ -156,22 +173,22 @@ def health_check():
 @app.route('/api/register', methods=['POST'])
 def register():
     """Register a new user account and initiate session."""
-    data = request.get_json(silent=True) or {}
-    username = str(data.get('username', '')).strip()
-    password = str(data.get('password', ''))
-
-    if not username or len(username) < 3:
-        return jsonify({'error': 'Username must be at least 3 characters long.'}), 400
-
-    if not password or len(password) < 6:
-        return jsonify({'error': 'Password must be at least 6 characters long.'}), 400
-
-    # Check for existing username (case-insensitive)
-    existing_user = User.query.filter(db.func.lower(User.username) == username.lower()).first()
-    if existing_user:
-        return jsonify({'error': 'Username is already taken. Please choose another.'}), 409
-
     try:
+        data = request.get_json(silent=True) or {}
+        username = str(data.get('username', '')).strip()
+        password = str(data.get('password', ''))
+
+        if not username or len(username) < 3:
+            return jsonify({'error': 'Username must be at least 3 characters long.'}), 400
+
+        if not password or len(password) < 6:
+            return jsonify({'error': 'Password must be at least 6 characters long.'}), 400
+
+        # Check for existing username (case-insensitive)
+        existing_user = User.query.filter(db.func.lower(User.username) == username.lower()).first()
+        if existing_user:
+            return jsonify({'error': 'Username is already taken. Please choose another.'}), 409
+
         new_user = User(username=username)
         new_user.set_password(password)
         db.session.add(new_user)
@@ -200,7 +217,11 @@ def login():
     if not username or not password:
         return jsonify({'error': 'Please provide both username and password.'}), 400
 
-    user = User.query.filter(db.func.lower(User.username) == username.lower()).first()
+    try:
+        user = User.query.filter(db.func.lower(User.username) == username.lower()).first()
+    except Exception as e:
+        return jsonify({'error': 'Login service error', 'details': str(e)}), 500
+
     if not user or not user.check_password(password):
         return jsonify({'error': 'Invalid username or password.'}), 401
 
