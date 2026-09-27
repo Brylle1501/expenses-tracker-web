@@ -328,7 +328,21 @@
           <div class="bg-gradient-to-br from-slate-800/90 via-slate-900 to-slate-950 border border-indigo-500/25 rounded-2xl p-5 shadow-xl shadow-black/20">
             <div class="flex items-center justify-between text-xs text-indigo-300 uppercase tracking-wider font-semibold mb-1">
               <span>Total Spent</span>
-              <span class="text-[11px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-md border border-indigo-500/30">JPY (¥)</span>
+              <div class="flex items-center gap-1.5 normal-case font-normal">
+                <select id="currency-select"
+                        onchange="changeCurrency(this.value)"
+                        aria-label="Select Currency"
+                        class="text-[11px] bg-slate-950/80 text-indigo-300 border border-indigo-500/30 rounded-lg px-2 py-1 font-semibold outline-none focus:ring-1 focus:ring-indigo-400 cursor-pointer">
+                  <option value="JPY">JPY (¥)</option>
+                  <option value="PHP">PHP (₱)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="GBP">GBP (£)</option>
+                  <option value="SGD">SGD (S$)</option>
+                  <option value="AUD">AUD (A$)</option>
+                  <option value="CAD">CAD (C$)</option>
+                </select>
+              </div>
             </div>
             <div id="total-spent-display" class="text-3xl font-extrabold text-white tracking-tight my-1">
               ¥0
@@ -361,13 +375,15 @@
             </div>
 
             <div>
-              <label for="expense-amount" class="block text-xs text-slate-300 mb-1">Amount (¥ JPY)</label>
+              <label for="expense-amount" class="block text-xs text-slate-300 mb-1">
+                Amount <span id="expense-input-label-currency" class="text-indigo-400 font-mono text-[11px]">(¥ JPY)</span>
+              </label>
               <div class="relative">
-                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-sm">¥</span>
+                <span id="expense-input-symbol" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-sm">¥</span>
                 <input type="number"
                        id="expense-amount"
                        step="any"
-                       min="1"
+                       min="0.01"
                        placeholder="0"
                        required
                        class="touch-target w-full pl-9 pr-4 bg-slate-900 border border-slate-700/80 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm text-slate-100 placeholder-slate-500 outline-none transition" />
@@ -444,7 +460,7 @@
         </div>
 
         <p class="text-xs text-slate-300 leading-relaxed">
-          Your total spending calculation will be reset to <strong class="text-white">¥0</strong>. This action cannot be reversed.
+          Your total spending calculation will be reset to <strong id="modal-currency-zero" class="text-white">¥0</strong>. This action cannot be reversed.
         </p>
 
         <div class="grid grid-cols-2 gap-2 pt-2">
@@ -499,9 +515,51 @@
       return div.innerHTML;
     }
 
-    function formatJPY(amount) {
+    // -------------------------------------------------------------
+    // Multi-Currency Management (Dynamic User Selector)
+    // -------------------------------------------------------------
+    const CURRENCIES = {
+      JPY: { symbol: '¥', code: 'JPY', locale: 'ja-JP', decimals: 0 },
+      PHP: { symbol: '₱', code: 'PHP', locale: 'en-PH', decimals: 2 },
+      USD: { symbol: '$', code: 'USD', locale: 'en-US', decimals: 2 },
+      EUR: { symbol: '€', code: 'EUR', locale: 'de-DE', decimals: 2 },
+      GBP: { symbol: '£', code: 'GBP', locale: 'en-GB', decimals: 2 },
+      SGD: { symbol: 'S$', code: 'SGD', locale: 'en-SG', decimals: 2 },
+      AUD: { symbol: 'A$', code: 'AUD', locale: 'en-AU', decimals: 2 },
+      CAD: { symbol: 'C$', code: 'CAD', locale: 'en-CA', decimals: 2 }
+    };
+    let selectedCurrency = localStorage.getItem('apex_preferred_currency') || 'JPY';
+
+    function formatCurrency(amount) {
+      const cur = CURRENCIES[selectedCurrency] || CURRENCIES.JPY;
       const num = Number(amount) || 0;
-      return '¥' + (num % 1 !== 0 ? num.toLocaleString('ja-JP', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : Math.round(num).toLocaleString('ja-JP'));
+      return cur.symbol + num.toLocaleString(cur.locale, {
+        minimumFractionDigits: cur.decimals,
+        maximumFractionDigits: 2
+      });
+    }
+    const formatJPY = formatCurrency; // Backward compatibility alias
+
+    function changeCurrency(newCode) {
+      if (CURRENCIES[newCode]) {
+        selectedCurrency = newCode;
+        localStorage.setItem('apex_preferred_currency', newCode);
+        updateCurrencyUI();
+        renderExpenses();
+      }
+    }
+
+    function updateCurrencyUI() {
+      const cur = CURRENCIES[selectedCurrency] || CURRENCIES.JPY;
+      const select = document.getElementById('currency-select');
+      const inputSymbol = document.getElementById('expense-input-symbol');
+      const inputLabel = document.getElementById('expense-input-label-currency');
+      const modalZero = document.getElementById('modal-currency-zero');
+
+      if (select && select.value !== selectedCurrency) select.value = selectedCurrency;
+      if (inputSymbol) inputSymbol.textContent = cur.symbol;
+      if (inputLabel) inputLabel.textContent = `(${cur.symbol} ${cur.code})`;
+      if (modalZero) modalZero.textContent = cur.symbol + (cur.decimals > 0 ? '0.00' : '0');
     }
 
     function formatDate(dateStr) {
@@ -1158,6 +1216,7 @@
 
     // Initial Auth Verification & App Boot
     document.addEventListener('DOMContentLoaded', () => {
+      updateCurrencyUI();
       checkAuthStatus();
     });
   </script>
