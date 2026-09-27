@@ -248,7 +248,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>Expenses</span>
-            <span id="expense-badge-total" class="text-[11px] py-0.5 px-1.5 rounded-full bg-slate-800 text-slate-300 font-bold">₱0</span>
+            <span id="expense-badge-total" class="text-[11px] py-0.5 px-1.5 rounded-full bg-slate-800 text-slate-300 font-bold">¥0</span>
           </button>
         </nav>
       </header>
@@ -328,10 +328,10 @@
           <div class="bg-gradient-to-br from-slate-800/90 via-slate-900 to-slate-950 border border-indigo-500/25 rounded-2xl p-5 shadow-xl shadow-black/20">
             <div class="flex items-center justify-between text-xs text-indigo-300 uppercase tracking-wider font-semibold mb-1">
               <span>Total Spent</span>
-              <span class="text-[11px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-md border border-indigo-500/30">PHP (₱)</span>
+              <span class="text-[11px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-md border border-indigo-500/30">JPY (¥)</span>
             </div>
             <div id="total-spent-display" class="text-3xl font-extrabold text-white tracking-tight my-1">
-              ₱0.00
+              ¥0
             </div>
             
             <div class="grid grid-cols-2 gap-2 pt-3 mt-3 border-t border-slate-800 text-xs">
@@ -341,7 +341,7 @@
               </div>
               <div>
                 <span class="text-slate-400 block text-[11px]">Average Cost</span>
-                <span id="expense-average-display" class="font-semibold text-slate-200">₱0.00</span>
+                <span id="expense-average-display" class="font-semibold text-slate-200">¥0</span>
               </div>
             </div>
           </div>
@@ -361,14 +361,14 @@
             </div>
 
             <div>
-              <label for="expense-amount" class="block text-xs text-slate-300 mb-1">Amount (₱ PHP)</label>
+              <label for="expense-amount" class="block text-xs text-slate-300 mb-1">Amount (¥ JPY)</label>
               <div class="relative">
-                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-sm">₱</span>
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-sm">¥</span>
                 <input type="number"
                        id="expense-amount"
-                       step="0.01"
-                       min="0.01"
-                       placeholder="0.00"
+                       step="any"
+                       min="1"
+                       placeholder="0"
                        required
                        class="touch-target w-full pl-9 pr-4 bg-slate-900 border border-slate-700/80 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm text-slate-100 placeholder-slate-500 outline-none transition" />
               </div>
@@ -444,7 +444,7 @@
         </div>
 
         <p class="text-xs text-slate-300 leading-relaxed">
-          Your total spending calculation will be reset to <strong class="text-white">₱0.00</strong>. This action cannot be reversed.
+          Your total spending calculation will be reset to <strong class="text-white">¥0</strong>. This action cannot be reversed.
         </p>
 
         <div class="grid grid-cols-2 gap-2 pt-2">
@@ -499,12 +499,9 @@
       return div.innerHTML;
     }
 
-    function formatPHP(amount) {
+    function formatJPY(amount) {
       const num = Number(amount) || 0;
-      return '₱' + num.toLocaleString('en-PH', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
+      return '¥' + (num % 1 !== 0 ? num.toLocaleString('ja-JP', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : Math.round(num).toLocaleString('ja-JP'));
     }
 
     function formatDate(dateStr) {
@@ -1012,7 +1009,7 @@
         const newExp = await res.json();
         expensesState.unshift(newExp);
         localStorage.setItem(getUserExpensesKey(), JSON.stringify(expensesState));
-        showToast(`Expense logged: ${formatPHP(amount)}`);
+        showToast(`Expense logged: ${formatJPY(amount)}`);
         renderExpenses();
         return;
       } catch (err) {
@@ -1029,7 +1026,7 @@
       };
       expensesState.unshift(fallbackExpense);
       localStorage.setItem(getUserExpensesKey(), JSON.stringify(expensesState));
-      showToast(`Expense logged offline: ${formatPHP(amount)}`);
+      showToast(`Expense logged offline: ${formatJPY(amount)}`);
       renderExpenses();
     }
 
@@ -1093,10 +1090,10 @@
       const count = expensesState.length;
       const average = count > 0 ? totalSpent / count : 0;
 
-      totalDisplay.textContent = formatPHP(totalSpent);
+      totalDisplay.textContent = formatJPY(totalSpent);
       countDisplay.textContent = `${count} ${count === 1 ? 'item' : 'items'}`;
-      avgDisplay.textContent = formatPHP(average);
-      badgeTotal.textContent = count > 0 ? formatPHP(totalSpent) : '₱0';
+      avgDisplay.textContent = formatJPY(average);
+      badgeTotal.textContent = count > 0 ? formatJPY(totalSpent) : '¥0';
 
       listEl.innerHTML = '';
 
@@ -1127,7 +1124,7 @@
 
           const amountBadge = document.createElement('span');
           amountBadge.className = 'text-sm font-semibold text-indigo-300 font-mono';
-          amountBadge.textContent = formatPHP(exp.amount);
+          amountBadge.textContent = formatJPY(exp.amount);
 
           const delBtn = document.createElement('button');
           delBtn.type = 'button';

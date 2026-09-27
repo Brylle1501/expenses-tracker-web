@@ -1,6 +1,6 @@
 # Apex | Mobile-First Personal Productivity & Expense Management Tool WITH USER AUTHENTICATION
 
-Apex is a clean, minimal, production-ready web application designed strictly **Mobile-First** for smartphones and modern browsers. It features secure **User Authentication (Register/Login/Logout)**, complete **multi-user data isolation**, a responsive **To-Do List Tracker**, and an **Expense Calculator** configured for Philippine Peso (₱).
+Apex is a clean, minimal, production-ready web application designed strictly **Mobile-First** for smartphones and modern browsers. It features secure **User Authentication (Register/Login/Logout)**, complete **multi-user data isolation**, a responsive **To-Do List Tracker**, and an **Expense Calculator** configured for Japanese Yen (¥).
 
 ---
 
@@ -108,7 +108,7 @@ By default, the server listens on `http://0.0.0.0:5000`:
 - **Clean Empty State**: Minimalist illustration when all tasks are complete.
 
 ### 4. Feature D: Expense Calculator & Log (User-Isolated)
-- **Currency Support**: Formatted for Philippine Peso (**₱**) with two decimal places and thousand separators.
+- **Currency Support**: Formatted for Japanese Yen (**¥**) with thousand separators.
 - **Live Dynamic Summary Card**: Displays **Total Spent**, total entries count, and average item cost.
 - **Input Form**: Clean description and currency decimal input.
 - **Itemized Log**: Mobile card feed showing description, formatted timestamp, price tag, and individual delete button.
