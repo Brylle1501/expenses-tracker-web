@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950">
+<head>
+  <meta charset="UTF-8">
+  <!-- Strictly Mobile-First Viewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="Production-ready mobile-first personal productivity task manager and expense calculator with secure user authentication.">
+  <title>Apex | Tasks & Expense Manager</title>
+
+  <!-- Google Fonts: Inter for Clean, High-Precision Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS via Official CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Prevent rubber-band effect & unwanted mobile highlights */
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body class="h-full bg-slate-950 text-slate-100 flex justify-center antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- Mobile-First Container (Max 448px width, centered on desktop, 100% on smartphones) -->
+  <div class="w-full max-w-md min-h-screen bg-slate-900 border-x border-slate-800/80 shadow-2xl flex flex-col relative overflow-x-hidden">
+
+    <!-- ======================================================== -->
+    <!-- VIEW 1: AUTHENTICATION SCREEN (LOGIN / REGISTER)         -->
+    <!-- ======================================================== -->
+    <div id="view-auth" class="flex-1 flex flex-col justify-center px-5 py-8 space-y-6">
+      
+      <!-- Brand & Header -->
+      <div class="text-center space-y-2">
+        <div class="w-14 h-14 rounded-2xl bg-indigo-600 mx-auto flex items-center justify-center text-white shadow-xl shadow-indigo-600/30">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+        </div>
+        <h1 class="text-2xl font-extrabold text-white tracking-tight">Apex Hub</h1>
+        <p class="text-xs text-slate-400">Personal Tasks & Expense Manager</p>
+      </div>
+
+      <!-- Segmented Auth Mode Switcher (Sign In vs Register) -->
+      <div class="p-1 bg-slate-950/80 rounded-xl border border-slate-800 grid grid-cols-2 text-sm font-semibold">
+        <button type="button"
+                id="tab-auth-login"
+                onclick="setAuthMode('login')"
+                class="touch-target py-2 px-3 rounded-lg transition-all duration-200 bg-indigo-600 text-white shadow-sm flex items-center justify-center">
+          Sign In
+        </button>
+        <button type="button"
+                id="tab-auth-register"
+                onclick="setAuthMode('register')"
+                class="touch-target py-2 px-3 rounded-lg transition-all duration-200 text-slate-400 hover:text-slate-200 flex items-center justify-center">
+          Register
+        </button>
+      </div>
+
+      <!-- Error Message Banner -->
+      <div id="auth-error-box" class="hidden p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
+        <svg class="w-4 h-4 shrink-0 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span id="auth-error-text">Authentication error message</span>
+      </div>
+
+      <!-- Auth Form -->
+      <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+        <!-- Username Field -->
+        <div>
+          <label for="auth-username" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Username</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">@</span>
+            <input type="text"
+                   id="auth-username"
+                   required
+                   autocomplete="username"
+                   placeholder="Enter username"
+                   class="touch-target w-full pl-9 pr-4 bg-slate-950 border border-slate-700/80 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm text-slate-100 placeholder-slate-500 outline-none transition" />
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div>
+          <label for="auth-password" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Password</label>
+          <div class="relative">
+            <input type="password"
+                   id="auth-password"
+                   required
+                   autocomplete="current-password"
+                   placeholder="At least 6 characters"
+                   class="touch-target w-full pl-4 pr-11 bg-slate-950 border border-slate-700/80 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm text-slate-100 placeholder-slate-500 outline-none transition" />
+            <button type="button"
+                    onclick="togglePasswordVisibility('auth-password', this)"
+                    class="touch-target absolute right-1 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-slate-500 hover:text-slate-300">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Confirm Password Field (Register Mode Only) -->
+        <div id="confirm-password-container" class="hidden">
+          <label for="auth-password-confirm" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Confirm Password</label>
+          <input type="password"
+                 id="auth-password-confirm"
+                 autocomplete="new-password"
+                 placeholder="Repeat your password"
+                 class="touch-target w-full px-4 bg-slate-950 border border-slate-700/80 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm text-slate-100 placeholder-slate-500 outline-none transition" />
+        </div>
+
+        <!-- Submit Button (Minimum 44px touch height) -->
+        <button type="submit"
+                id="btn-auth-submit"
+                class="touch-target w-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition mt-2">
+          <span id="btn-auth-text">Sign In</span>
+          <svg id="btn-auth-spinner" class="hidden w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+        </button>
+      </form>
+
+      <!-- Tip Callout -->
+      <div class="text-center">
+        <p class="text-[11px] text-slate-500">
+          Your tasks and expenses are encrypted and tied strictly to your personal account.
+        </p>
+      </div>
+
+    </div>
+
+
+    <!-- ======================================================== -->
+    <!-- VIEW 2: MAIN DASHBOARD SCREEN (AUTHENTICATED)            -->
+    <!-- ======================================================== -->
+    <div id="view-dashboard" class="hidden flex-1 flex flex-col min-h-screen">
+      
+      <!-- Top Fixed/Sticky Header -->
+      <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 pt-3 pb-2.5">
+        <!-- Top Bar with User Badge & Logout -->
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2 min-w-0">
+            <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow-md shadow-indigo-600/30">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <div class="min-w-0">
+              <h2 class="text-sm font-bold text-slate-100 leading-tight">Apex Hub</h2>
+              <div class="flex items-center gap-1 text-[11px] text-indigo-400 font-medium truncate">
+                <span class="truncate">@<span id="current-username">user</span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Controls: Status & Logout Button -->
+          <div class="flex items-center gap-2">
+            <div id="sync-status-badge" class="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="sync-status-text">Synced</span>
+            </div>
+
+            <!-- Touch-Friendly Logout Button -->
+            <button type="button"
+                    onclick="handleLogout()"
+                    class="touch-target flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 active:scale-95 border border-rose-500/20 rounded-lg transition"
+                    title="Log Out">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span>Exit</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Segmented Tab Navigation Bar -->
+        <nav class="grid grid-cols-2 p-1 bg-slate-950/80 rounded-xl border border-slate-800" role="tablist">
+          <button id="tab-tasks-btn"
+                  onclick="switchTab('tasks')"
+                  role="tab"
+                  aria-selected="true"
+                  aria-controls="panel-tasks"
+                  class="touch-target flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <span>Tasks</span>
+            <span id="task-badge-count" class="text-[11px] py-0.5 px-1.5 rounded-full bg-white/20 text-white font-bold">0</span>
+          </button>
+
+          <button id="tab-expenses-btn"
+                  onclick="switchTab('expenses')"
+                  role="tab"
+                  aria-selected="false"
+                  aria-controls="panel-expenses"
+                  class="touch-target flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 text-slate-400 hover:text-slate-200">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Expenses</span>
+            <span id="expense-badge-total" class="text-[11px] py-0.5 px-1.5 rounded-full bg-slate-800 text-slate-300 font-bold">₱0</span>
+          </button>
+        </nav>
+      </header>
+
+      <!-- Main Content Area with Fluid Vertical Mobile Scrolling -->
+      <main class="flex-1 p-4 pb-16 space-y-4 overflow-y-auto">
+
+        <!-- ======================================================== -->
+        <!-- TAB PANEL 1: TASK MANAGER                                -->
+        <!-- ======================================================== -->
+        <section id="panel-tasks" role="tabpanel" class="space-y-4">
+          
+          <!-- Task Progress Banner -->
+          <div class="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4">
+            <div class="flex items-center justify-between text-xs font-medium text-slate-400 mb-2">
+              <span>Productivity Progress</span>
+              <span id="task-progress-ratio">0 of 0 Completed (0%)</span>
+            </div>
+            <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div id="task-progress-bar" class="h-full bg-indigo-500 rounded-full transition-all duration-300 w-0"></div>
+            </div>
+          </div>
+
+          <!-- Task Input Form -->
+          <form id="task-form" onsubmit="handleAddTask(event)" class="space-y-2">
+            <label for="task-input" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Add New Task</label>
+            <div class="flex gap-2">
+              <input type="text"
+                     id="task-input"
+                     placeholder="What needs to be done?"
+                     required
+                     autocomplete="off"
+                     class="touch-target flex-1 bg-slate-950 border border-slate-700/80 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl px-4 text-sm text-slate-100 placeholder-slate-500 outline-none transition" />
+              <button type="submit"
+                      id="btn-add-task"
+                      class="touch-target px-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-medium rounded-xl text-sm flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Add</span>
+              </button>
+            </div>
+          </form>
+
+          <!-- Filter Chips (All, Pending, Done) -->
+          <div class="flex items-center gap-1.5 py-1 text-xs">
+            <button type="button" onclick="setTaskFilter('all')" id="filter-all" class="touch-target px-3.5 py-1.5 rounded-lg font-semibold bg-indigo-600/20 text-indigo-300 border border-indigo-500/30">All</button>
+            <button type="button" onclick="setTaskFilter('pending')" id="filter-pending" class="touch-target px-3.5 py-1.5 rounded-lg font-medium text-slate-400 hover:text-slate-200 border border-slate-800 bg-slate-950/40">Active</button>
+            <button type="button" onclick="setTaskFilter('completed')" id="filter-completed" class="touch-target px-3.5 py-1.5 rounded-lg font-medium text-slate-400 hover:text-slate-200 border border-slate-800 bg-slate-950/40">Done</button>
+          </div>
+
+          <!-- Task List Items Container -->
+          <div id="task-list" class="space-y-2">
+            <!-- Rendered dynamically by JavaScript -->
+          </div>
+
+          <!-- Task Empty State -->
+          <div id="task-empty-state" class="hidden py-12 text-center flex flex-col items-center justify-center">
+            <div class="w-12 h-12 rounded-2xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-500 mb-3">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 class="text-sm font-semibold text-slate-300">No tasks in this view</h3>
+            <p class="text-xs text-slate-500 mt-1 max-w-[220px]">Add a new task above to maintain personal productivity.</p>
+          </div>
+
+        </section>
+
+
+        <!-- ======================================================== -->
+        <!-- TAB PANEL 2: EXPENSE CALCULATOR & LOG                    -->
+        <!-- ======================================================== -->
+        <section id="panel-expenses" role="tabpanel" class="space-y-4 hidden">
+
+          <!-- Live Dynamic Summary Card -->
+          <div class="bg-gradient-to-br from-slate-800/90 via-slate-900 to-slate-950 border border-indigo-500/25 rounded-2xl p-5 shadow-xl shadow-black/20">
+            <div class="flex items-center justify-between text-xs text-indigo-300 uppercase tracking-wider font-semibold mb-1">
+              <span>Total Spent</span>
+              <span class="text-[11px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-md border border-indigo-500/30">PHP (₱)</span>
+            </div>
+            <div id="total-spent-display" class="text-3xl font-extrabold text-white tracking-tight my-1">
+              ₱0.00
+            </div>
+            
+            <div class="grid grid-cols-2 gap-2 pt-3 mt-3 border-t border-slate-800 text-xs">
+              <div>
+                <span class="text-slate-400 block text-[11px]">Logged Entries</span>
+                <span id="expense-count-display" class="font-semibold text-slate-200">0 items</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[11px]">Average Cost</span>
+                <span id="expense-average-display" class="font-semibold text-slate-200">₱0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Expense Input Form -->
+          <form id="expense-form" onsubmit="handleAddExpense(event)" class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Log New Expense</h3>
+
+            <div>
+              <label for="expense-desc" class="block text-xs text-slate-300 mb-1">Description</label>
+              <input type="text"
+                     id="expense-desc"
+                     placeholder="e.g., Grocery, Rent, Internet, Coffee"
+                     required
+                     autocomplete="off"
+                     class="touch-target w-full bg-slate-900 border border-slate-700/80 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl px-4 text-sm text-slate-100 placeholder-slate-500 outline-none transition" />
+            </div>
+
+            <div>
+              <label for="expense-amount" class="block text-xs text-slate-300 mb-1">Amount (₱ PHP)</label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-sm">₱</span>
+                <input type="number"
+                       id="expense-amount"
+                       step="0.01"
+                       min="0.01"
+                       placeholder="0.00"
+                       required
+                       class="touch-target w-full pl-9 pr-4 bg-slate-900 border border-slate-700/80 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm text-slate-100 placeholder-slate-500 outline-none transition" />
+              </div>
+            </div>
+
+            <button type="submit"
+                    id="btn-add-expense"
+                    class="touch-target w-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20 transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Add Expense</span>
+            </button>
+          </form>
+
+          <!-- Expense Log Header with Reset Data Option -->
+          <div class="flex items-center justify-between pt-1">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Expense Log</h3>
+            <button type="button"
+                    id="btn-open-reset-modal"
+                    onclick="openResetModal()"
+                    class="touch-target text-xs text-rose-400 hover:text-rose-300 active:scale-95 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-rose-500/20 bg-rose-500/10 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span>Reset Data</span>
+            </button>
+          </div>
+
+          <!-- Itemized Expense Cards List -->
+          <div id="expense-list" class="space-y-2">
+            <!-- Rendered dynamically by JavaScript -->
+          </div>
+
+          <!-- Expense Empty State -->
+          <div id="expense-empty-state" class="hidden py-12 text-center flex flex-col items-center justify-center">
+            <div class="w-12 h-12 rounded-2xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-500 mb-3">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <h3 class="text-sm font-semibold text-slate-300">No expenses recorded</h3>
+            <p class="text-xs text-slate-500 mt-1 max-w-[220px]">Log an item and price to monitor your personal expenditure.</p>
+          </div>
+
+        </section>
+
+      </main>
+
+    </div>
+
+    <!-- Mobile Toast Notification System -->
+    <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 pointer-events-none opacity-0 translate-y-[-20px] max-w-xs w-full px-4">
+      <div id="toast-inner" class="bg-slate-800 border border-slate-700 text-slate-100 text-xs font-medium px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2">
+        <span id="toast-icon">✓</span>
+        <span id="toast-message">Notification</span>
+      </div>
+    </div>
+
+    <!-- Mobile-Friendly Confirmation Modal for Data Reset -->
+    <div id="reset-confirm-modal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 transition-opacity duration-200 opacity-0 pointer-events-none">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-100">Clear All Expenses?</h3>
+            <p class="text-xs text-slate-400">Permanently delete your expense entries.</p>
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Your total spending calculation will be reset to <strong class="text-white">₱0.00</strong>. This action cannot be reversed.
+        </p>
+
+        <div class="grid grid-cols-2 gap-2 pt-2">
+          <button type="button"
+                  onclick="closeResetModal()"
+                  class="touch-target py-2.5 px-4 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+            Cancel
+          </button>
+          <button type="button"
+                  id="btn-confirm-reset"
+                  onclick="confirmResetExpenses()"
+                  class="touch-target py-2.5 px-4 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-600/30 transition">
+            Yes, Reset
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Vanilla JavaScript Implementation -->
+  <script>
+    /**
+     * Apex Mobile-First Application Core
+     * User Authentication, User-Isolated Tasks & Expenses, and LocalStorage Caching.
+     */
+
+    // Application State
+    let currentUser = null;
+    let authMode = 'login'; // 'login' or 'register'
+    let tasksState = [];
+    let expensesState = [];
+    let currentTaskFilter = 'all';
+    let isOfflineMode = false;
+    let toastTimeout = null;
+
+    // Helper: LocalStorage Keys (Per User Isolation)
+    function getUserTasksKey() {
+      return currentUser ? `apex_tasks_u${currentUser.id}` : 'apex_tasks_guest';
+    }
+    function getUserExpensesKey() {
+      return currentUser ? `apex_expenses_u${currentUser.id}` : 'apex_expenses_guest';
+    }
+
+    // -------------------------------------------------------------
+    // Security & Helper Utilities
+    // -------------------------------------------------------------
+    function sanitize(str) {
+      if (str === null || str === undefined) return '';
+      const div = document.createElement('div');
+      div.textContent = String(str);
+      return div.innerHTML;
+    }
+
+    function formatPHP(amount) {
+      const num = Number(amount) || 0;
+      return '₱' + num.toLocaleString('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return 'Just now';
+      try {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return d.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric'
+        }) + ' • ' + d.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit'
+        });
+      } catch (e) {
+        return dateStr;
+      }
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const inner = document.getElementById('toast-inner');
+      const msg = document.getElementById('toast-message');
+      const icon = document.getElementById('toast-icon');
+
+      if (toastTimeout) clearTimeout(toastTimeout);
+
+      msg.textContent = message;
+      if (type === 'error') {
+        inner.className = 'bg-rose-950/90 border border-rose-700 text-rose-100 text-xs font-medium px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2';
+        icon.textContent = '✕';
+      } else if (type === 'warning') {
+        inner.className = 'bg-amber-950/90 border border-amber-700 text-amber-100 text-xs font-medium px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2';
+        icon.textContent = '⚠';
+      } else {
+        inner.className = 'bg-slate-800/95 border border-slate-700 text-slate-100 text-xs font-medium px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2';
+        icon.textContent = '✓';
+      }
+
+      toast.classList.remove('opacity-0', 'translate-y-[-20px]');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-[-20px]');
+      }, 2500);
+    }
+
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.classList.add('text-indigo-400');
+      } else {
+        input.type = 'password';
+        btn.classList.remove('text-indigo-400');
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Authentication Handlers
+    // -------------------------------------------------------------
+    function setAuthMode(mode) {
+      authMode = mode;
+      const loginTab = document.getElementById('tab-auth-login');
+      const regTab = document.getElementById('tab-auth-register');
+      const confirmContainer = document.getElementById('confirm-password-container');
+      const submitText = document.getElementById('btn-auth-text');
+      const errorBox = document.getElementById('auth-error-box');
+
+      errorBox.classList.add('hidden');
+
+      if (mode === 'login') {
+        loginTab.className = 'touch-target py-2 px-3 rounded-lg transition-all duration-200 bg-indigo-600 text-white shadow-sm flex items-center justify-center';
+        regTab.className = 'touch-target py-2 px-3 rounded-lg transition-all duration-200 text-slate-400 hover:text-slate-200 flex items-center justify-center';
+        confirmContainer.classList.add('hidden');
+        document.getElementById('auth-password-confirm').required = false;
+        submitText.textContent = 'Sign In';
+      } else {
+        regTab.className = 'touch-target py-2 px-3 rounded-lg transition-all duration-200 bg-indigo-600 text-white shadow-sm flex items-center justify-center';
+        loginTab.className = 'touch-target py-2 px-3 rounded-lg transition-all duration-200 text-slate-400 hover:text-slate-200 flex items-center justify-center';
+        confirmContainer.classList.remove('hidden');
+        document.getElementById('auth-password-confirm').required = true;
+        submitText.textContent = 'Create Account';
+      }
+    }
+
+    function showAuthError(msg) {
+      const errorBox = document.getElementById('auth-error-box');
+      const errorText = document.getElementById('auth-error-text');
+      errorText.textContent = msg;
+      errorBox.classList.remove('hidden');
+    }
+
+    async function checkAuthStatus() {
+      try {
+        const res = await fetch('/api/me', { credentials: 'same-origin' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated && data.user) {
+            setCurrentUser(data.user);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Network issue checking auth:', e);
+      }
+
+      // Check LocalStorage session cache if available
+      const cached = localStorage.getItem('apex_user_session');
+      if (cached) {
+        try {
+          const u = JSON.parse(cached);
+          if (u && u.id) {
+            setCurrentUser(u);
+            isOfflineMode = true;
+            return;
+          }
+        } catch (_) {}
+      }
+
+      showAuthView();
+    }
+
+    function setCurrentUser(user) {
+      currentUser = user;
+      localStorage.setItem('apex_user_session', JSON.stringify(user));
+      document.getElementById('current-username').textContent = user.username;
+
+      // Switch to Dashboard View
+      document.getElementById('view-auth').classList.add('hidden');
+      document.getElementById('view-dashboard').classList.remove('hidden');
+
+      // Load user-specific data
+      loadTasks();
+      loadExpenses();
+    }
+
+    function showAuthView() {
+      currentUser = null;
+      localStorage.removeItem('apex_user_session');
+      document.getElementById('view-dashboard').classList.add('hidden');
+      document.getElementById('view-auth').classList.remove('hidden');
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const usernameInput = document.getElementById('auth-username');
+      const passwordInput = document.getElementById('auth-password');
+      const confirmInput = document.getElementById('auth-password-confirm');
+      const errorBox = document.getElementById('auth-error-box');
+      const spinner = document.getElementById('btn-auth-spinner');
+      const btnText = document.getElementById('btn-auth-text');
+
+      errorBox.classList.add('hidden');
+
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!username || username.length < 3) {
+        showAuthError('Username must be at least 3 characters.');
+        return;
+      }
+      if (!password || password.length < 6) {
+        showAuthError('Password must be at least 6 characters.');
+        return;
+      }
+
+      if (authMode === 'register') {
+        const confirmPassword = confirmInput.value;
+        if (password !== confirmPassword) {
+          showAuthError('Passwords do not match.');
+          return;
+        }
+      }
+
+      spinner.classList.remove('hidden');
+      btnText.classList.add('opacity-50');
+
+      const endpoint = authMode === 'register' ? '/api/register' : '/api/login';
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showAuthError(data.error || 'Authentication failed.');
+          return;
+        }
+
+        // Success
+        usernameInput.value = '';
+        passwordInput.value = '';
+        if (confirmInput) confirmInput.value = '';
+
+        setCurrentUser(data.user);
+        showToast(authMode === 'register' ? 'Account created! Welcome.' : 'Signed in successfully.');
+
+      } catch (err) {
+        showAuthError('Network error. Check server connectivity.');
+      } finally {
+        spinner.classList.add('hidden');
+        btnText.classList.remove('opacity-50');
+      }
+    }
+
+    async function handleLogout() {
+      try {
+        await fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'same-origin'
+        });
+      } catch (e) {
+        console.warn('Logout network error:', e);
+      }
+
+      showAuthView();
+      showToast('Logged out successfully.');
+    }
+
+    // -------------------------------------------------------------
+    // Tab Navigation
+    // -------------------------------------------------------------
+    function switchTab(tabId) {
+      const panelTasks = document.getElementById('panel-tasks');
+      const panelExpenses = document.getElementById('panel-expenses');
+      const tabTasksBtn = document.getElementById('tab-tasks-btn');
+      const tabExpensesBtn = document.getElementById('tab-expenses-btn');
+
+      if (tabId === 'tasks') {
+        panelTasks.classList.remove('hidden');
+        panelExpenses.classList.add('hidden');
+
+        tabTasksBtn.setAttribute('aria-selected', 'true');
+        tabExpensesBtn.setAttribute('aria-selected', 'false');
+
+        tabTasksBtn.className = 'touch-target flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-sm';
+        tabExpensesBtn.className = 'touch-target flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 text-slate-400 hover:text-slate-200';
+      } else {
+        panelExpenses.classList.remove('hidden');
+        panelTasks.classList.add('hidden');
+
+        tabTasksBtn.setAttribute('aria-selected', 'false');
+        tabExpensesBtn.setAttribute('aria-selected', 'true');
+
+        tabExpensesBtn.className = 'touch-target flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-sm';
+        tabTasksBtn.className = 'touch-target flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 text-slate-400 hover:text-slate-200';
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Task Manager Handlers & Rendering (User-Isolated)
+    // -------------------------------------------------------------
+    async function loadTasks() {
+      try {
+        const response = await fetch('/api/tasks', { credentials: 'same-origin' });
+        if (response.status === 401) {
+          showAuthView();
+          return;
+        }
+        if (!response.ok) throw new Error('API server unavailable');
+        const tasks = await response.json();
+        tasksState = tasks;
+        localStorage.setItem(getUserTasksKey(), JSON.stringify(tasks));
+      } catch (err) {
+        console.warn('Using local task cache:', err);
+        const stored = localStorage.getItem(getUserTasksKey());
+        tasksState = stored ? JSON.parse(stored) : [];
+      }
+      renderTasks();
+    }
+
+    async function handleAddTask(e) {
+      e.preventDefault();
+      const input = document.getElementById('task-input');
+      const title = input.value.trim();
+      if (!title) return;
+
+      const payload = { title };
+      input.value = '';
+
+      try {
+        const res = await fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify(payload)
+        });
+
+        if (res.status === 401) {
+          showAuthView();
+          return;
+        }
+        if (!res.ok) throw new Error('Failed to create task on server');
+        const newTask = await res.json();
+        tasksState.unshift(newTask);
+        localStorage.setItem(getUserTasksKey(), JSON.stringify(tasksState));
+        showToast('Task added');
+        renderTasks();
+        return;
+      } catch (err) {
+        console.warn('API error, falling back to LocalStorage:', err);
+      }
+
+      // Offline LocalStorage Fallback Creation
+      const fallbackTask = {
+        id: Date.now(),
+        title: title,
+        completed: false,
+        user_id: currentUser ? currentUser.id : null
+      };
+      tasksState.unshift(fallbackTask);
+      localStorage.setItem(getUserTasksKey(), JSON.stringify(tasksState));
+      showToast('Task saved locally (offline)');
+      renderTasks();
+    }
+
+    async function toggleTask(taskId) {
+      const task = tasksState.find(t => t.id === taskId);
+      if (!task) return;
+
+      const newCompleted = !task.completed;
+      task.completed = newCompleted;
+      localStorage.setItem(getUserTasksKey(), JSON.stringify(tasksState));
+      renderTasks();
+
+      try {
+        const res = await fetch(`/api/tasks/${taskId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ completed: newCompleted })
+        });
+        if (res.status === 401) showAuthView();
+      } catch (err) {
+        console.warn('Failed to sync toggle with server:', err);
+      }
+    }
+
+    async function deleteTask(taskId) {
+      tasksState = tasksState.filter(t => t.id !== taskId);
+      localStorage.setItem(getUserTasksKey(), JSON.stringify(tasksState));
+      renderTasks();
+      showToast('Task deleted');
+
+      try {
+        const res = await fetch(`/api/tasks/${taskId}`, {
+          method: 'DELETE',
+          credentials: 'same-origin'
+        });
+        if (res.status === 401) showAuthView();
+      } catch (err) {
+        console.warn('Failed to sync delete with server:', err);
+      }
+    }
+
+    function setTaskFilter(filter) {
+      currentTaskFilter = filter;
+      const filters = ['all', 'pending', 'completed'];
+      filters.forEach(f => {
+        const btn = document.getElementById(`filter-${f}`);
+        if (f === filter) {
+          btn.className = 'touch-target px-3.5 py-1.5 rounded-lg font-semibold bg-indigo-600/20 text-indigo-300 border border-indigo-500/30';
+        } else {
+          btn.className = 'touch-target px-3.5 py-1.5 rounded-lg font-medium text-slate-400 hover:text-slate-200 border border-slate-800 bg-slate-950/40';
+        }
+      });
+      renderTasks();
+    }
+
+    function renderTasks() {
+      const listEl = document.getElementById('task-list');
+      const emptyEl = document.getElementById('task-empty-state');
+      const badgeCount = document.getElementById('task-badge-count');
+      const progressRatio = document.getElementById('task-progress-ratio');
+      const progressBar = document.getElementById('task-progress-bar');
+
+      const total = tasksState.length;
+      const completedCount = tasksState.filter(t => t.completed).length;
+      const pendingCount = total - completedCount;
+      const percentage = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+
+      badgeCount.textContent = pendingCount;
+      progressRatio.textContent = `${completedCount} of ${total} Completed (${percentage}%)`;
+      progressBar.style.width = `${percentage}%`;
+
+      let filtered = tasksState;
+      if (currentTaskFilter === 'pending') {
+        filtered = tasksState.filter(t => !t.completed);
+      } else if (currentTaskFilter === 'completed') {
+        filtered = tasksState.filter(t => t.completed);
+      }
+
+      listEl.innerHTML = '';
+
+      if (filtered.length === 0) {
+        emptyEl.classList.remove('hidden');
+      } else {
+        emptyEl.classList.add('hidden');
+        filtered.forEach(task => {
+          const item = document.createElement('div');
+          item.className = 'touch-target group bg-slate-950/70 border border-slate-800/80 rounded-xl p-2.5 pl-3.5 flex items-center justify-between gap-3 hover:border-slate-700/80 transition-all';
+
+          const leftWrap = document.createElement('div');
+          leftWrap.className = 'flex items-center gap-3 flex-1 min-w-0 cursor-pointer select-none';
+          leftWrap.onclick = () => toggleTask(task.id);
+
+          const checkBtn = document.createElement('div');
+          checkBtn.className = `w-6 h-6 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
+            task.completed ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-600 hover:border-slate-500 bg-slate-900'
+          }`;
+          checkBtn.innerHTML = task.completed
+            ? '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>'
+            : '';
+
+          const titleSpan = document.createElement('span');
+          titleSpan.className = `text-sm leading-snug break-words flex-1 transition-all ${
+            task.completed ? 'line-through text-slate-500 opacity-60' : 'text-slate-200'
+          }`;
+          titleSpan.innerHTML = sanitize(task.title);
+
+          leftWrap.appendChild(checkBtn);
+          leftWrap.appendChild(titleSpan);
+
+          const delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.className = 'touch-target w-11 h-11 flex items-center justify-center text-slate-400 hover:text-rose-400 active:scale-95 transition-colors rounded-lg';
+          delBtn.setAttribute('aria-label', 'Delete Task');
+          delBtn.innerHTML = `
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          `;
+          delBtn.onclick = (e) => {
+            e.stopPropagation();
+            deleteTask(task.id);
+          };
+
+          item.appendChild(leftWrap);
+          item.appendChild(delBtn);
+          listEl.appendChild(item);
+        });
+      }
+    }
+
+
+    // -------------------------------------------------------------
+    // Expense Calculator Handlers & Rendering (User-Isolated)
+    // -------------------------------------------------------------
+    async function loadExpenses() {
+      try {
+        const response = await fetch('/api/expenses', { credentials: 'same-origin' });
+        if (response.status === 401) {
+          showAuthView();
+          return;
+        }
+        if (!response.ok) throw new Error('API server unavailable');
+        const expenses = await response.json();
+        expensesState = expenses;
+        localStorage.setItem(getUserExpensesKey(), JSON.stringify(expenses));
+      } catch (err) {
+        console.warn('Using local expense cache:', err);
+        const stored = localStorage.getItem(getUserExpensesKey());
+        expensesState = stored ? JSON.parse(stored) : [];
+      }
+      renderExpenses();
+    }
+
+    async function handleAddExpense(e) {
+      e.preventDefault();
+      const descInput = document.getElementById('expense-desc');
+      const amountInput = document.getElementById('expense-amount');
+
+      const description = descInput.value.trim();
+      const amount = parseFloat(amountInput.value);
+
+      if (!description || isNaN(amount) || amount <= 0) {
+        showToast('Please enter a description and valid positive amount', 'warning');
+        return;
+      }
+
+      const payload = { description, amount };
+      descInput.value = '';
+      amountInput.value = '';
+
+      try {
+        const res = await fetch('/api/expenses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify(payload)
+        });
+
+        if (res.status === 401) {
+          showAuthView();
+          return;
+        }
+        if (!res.ok) throw new Error('Failed to save expense');
+        const newExp = await res.json();
+        expensesState.unshift(newExp);
+        localStorage.setItem(getUserExpensesKey(), JSON.stringify(expensesState));
+        showToast(`Expense logged: ${formatPHP(amount)}`);
+        renderExpenses();
+        return;
+      } catch (err) {
+        console.warn('API error, falling back to LocalStorage:', err);
+      }
+
+      // Offline LocalStorage Fallback Creation
+      const fallbackExpense = {
+        id: Date.now(),
+        description: description,
+        amount: Number(amount.toFixed(2)),
+        created_at: new Date().toISOString(),
+        user_id: currentUser ? currentUser.id : null
+      };
+      expensesState.unshift(fallbackExpense);
+      localStorage.setItem(getUserExpensesKey(), JSON.stringify(expensesState));
+      showToast(`Expense logged offline: ${formatPHP(amount)}`);
+      renderExpenses();
+    }
+
+    async function deleteExpense(expenseId) {
+      expensesState = expensesState.filter(e => e.id !== expenseId);
+      localStorage.setItem(getUserExpensesKey(), JSON.stringify(expensesState));
+      renderExpenses();
+      showToast('Expense removed');
+
+      try {
+        const res = await fetch(`/api/expenses/${expenseId}`, {
+          method: 'DELETE',
+          credentials: 'same-origin'
+        });
+        if (res.status === 401) showAuthView();
+      } catch (err) {
+        console.warn('Failed to sync expense deletion:', err);
+      }
+    }
+
+    function openResetModal() {
+      const modal = document.getElementById('reset-confirm-modal');
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      modal.classList.add('opacity-100', 'pointer-events-auto');
+    }
+
+    function closeResetModal() {
+      const modal = document.getElementById('reset-confirm-modal');
+      modal.classList.remove('opacity-100', 'pointer-events-auto');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    async function confirmResetExpenses() {
+      closeResetModal();
+
+      expensesState = [];
+      localStorage.setItem(getUserExpensesKey(), JSON.stringify([]));
+      renderExpenses();
+      showToast('All personal expense records cleared');
+
+      try {
+        const res = await fetch('/api/expenses/clear', {
+          method: 'DELETE',
+          credentials: 'same-origin'
+        });
+        if (res.status === 401) showAuthView();
+      } catch (err) {
+        console.warn('Failed to sync expense reset:', err);
+      }
+    }
+
+    function renderExpenses() {
+      const listEl = document.getElementById('expense-list');
+      const emptyEl = document.getElementById('expense-empty-state');
+      const totalDisplay = document.getElementById('total-spent-display');
+      const countDisplay = document.getElementById('expense-count-display');
+      const avgDisplay = document.getElementById('expense-average-display');
+      const badgeTotal = document.getElementById('expense-badge-total');
+
+      const totalSpent = expensesState.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+      const count = expensesState.length;
+      const average = count > 0 ? totalSpent / count : 0;
+
+      totalDisplay.textContent = formatPHP(totalSpent);
+      countDisplay.textContent = `${count} ${count === 1 ? 'item' : 'items'}`;
+      avgDisplay.textContent = formatPHP(average);
+      badgeTotal.textContent = count > 0 ? formatPHP(totalSpent) : '₱0';
+
+      listEl.innerHTML = '';
+
+      if (count === 0) {
+        emptyEl.classList.remove('hidden');
+      } else {
+        emptyEl.classList.add('hidden');
+        expensesState.forEach(exp => {
+          const card = document.createElement('div');
+          card.className = 'touch-target bg-slate-950/70 border border-slate-800/80 rounded-xl p-3 flex items-center justify-between gap-3 hover:border-slate-700/80 transition-all';
+
+          const info = document.createElement('div');
+          info.className = 'flex-1 min-w-0';
+
+          const desc = document.createElement('div');
+          desc.className = 'text-sm font-medium text-slate-200 truncate';
+          desc.innerHTML = sanitize(exp.description);
+
+          const date = document.createElement('div');
+          date.className = 'text-[11px] text-slate-500 mt-0.5';
+          date.textContent = formatDate(exp.created_at);
+
+          info.appendChild(desc);
+          info.appendChild(date);
+
+          const right = document.createElement('div');
+          right.className = 'flex items-center gap-2 shrink-0';
+
+          const amountBadge = document.createElement('span');
+          amountBadge.className = 'text-sm font-semibold text-indigo-300 font-mono';
+          amountBadge.textContent = formatPHP(exp.amount);
+
+          const delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.className = 'touch-target w-10 h-10 flex items-center justify-center text-slate-400 hover:text-rose-400 active:scale-95 transition-colors rounded-lg';
+          delBtn.setAttribute('aria-label', `Delete expense ${exp.description}`);
+          delBtn.innerHTML = `
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          `;
+          delBtn.onclick = () => deleteExpense(exp.id);
+
+          right.appendChild(amountBadge);
+          right.appendChild(delBtn);
+
+          card.appendChild(info);
+          card.appendChild(right);
+          listEl.appendChild(card);
+        });
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Keyboard & Modal Event Listeners
+    // -------------------------------------------------------------
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeResetModal();
+      }
+    });
+
+    // Initial Auth Verification & App Boot
+    document.addEventListener('DOMContentLoaded', () => {
+      checkAuthStatus();
+    });
+  </script>
+</body>
+</html>

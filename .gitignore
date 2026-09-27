@@ -1,0 +1,8 @@
+*.db
+finance_todo.db
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+.vercel
