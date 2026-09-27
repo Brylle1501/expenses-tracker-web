@@ -29,6 +29,10 @@ else:
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url or default_sqlite_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_recycle': 300
+}
 app.config['JSON_SORT_KEYS'] = False
 
 # Secure Session Configuration
@@ -107,8 +111,11 @@ class Expense(db.Model):
 
 
 # Auto-create tables on startup
-with app.app_context():
-    db.create_all()
+try:
+    with app.app_context():
+        db.create_all()
+except Exception as err:
+    app.logger.warning(f"Database initialization check: {err}")
 
 
 # ---------------------------------------------------------
